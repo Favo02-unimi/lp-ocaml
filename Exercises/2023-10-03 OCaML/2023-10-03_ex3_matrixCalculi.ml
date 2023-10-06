@@ -11,19 +11,18 @@ let print_matrix matrix =
     ();;
 
 (* matrice n * m tutta a 0 *)
-let zeroes n m =
-  Array.make_matrix n m 0;;
+let zeroes n m = Array.make_matrix n m 0;;
 
 print_string "matrice 0 4x6:\n";;
 print_matrix (zeroes 4 6);;
 
 (* matrice n * n con la diagonale a 1 (matrice identità) *)
-let identity n =
-  let rec make_identity matrix row =
-    match row with
-      | 0 -> matrix
-      | _ -> matrix.(row-1).(row-1) <- 1; make_identity matrix (row-1)
-  in make_identity (zeroes n n) n;;
+let identity size =
+  let rec make_identity result cur_row =
+    match cur_row with
+      | 0 -> Array.of_list result
+      | _ -> make_identity ((Array.init size (fun n -> if n = (cur_row-1) then 1 else 0)) :: result) (cur_row-1)
+  in make_identity [] size;;
 
 print_string "matrice identità 4x4:\n";;
 print_matrix (identity 4);;
@@ -42,7 +41,7 @@ let init n =
     let rec make_init result n row_start remaining =
       match remaining with
         | 0 -> result
-        | _ -> make_init (Array.concat [result; [|make_row row_start n|]]) n (row_start+n) (remaining-1)
+        | _ -> make_init (Array.append result [|make_row row_start n|]) n (row_start+n) (remaining-1)
     in make_init [||] n 0 n;;
 
 print_string "matrice 4x4 con i primi 4x4 numeri interi:\n";;
@@ -81,8 +80,6 @@ print_string "somma tra due matrici non quadrate:\n";;
 print_matrix (matrix_sum [|[|1;2;3|];[|4;5;6|]|] [|[|6;5;4|];[|3;2;1|]|]);;
 
 (* moltiplicazione tra matrici, non per forza quadrate ma compatibili tra loro (num colonne di una = nom righe dell'altra) *)
-
-
 let matrix_mult m1 m2 =
   (* moltiplicazione di tutti i valori di una riga *)
   let mul_row row matrix2 =
