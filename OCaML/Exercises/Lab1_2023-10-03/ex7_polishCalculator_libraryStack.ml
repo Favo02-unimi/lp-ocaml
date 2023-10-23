@@ -1,34 +1,6 @@
 #load "str.cma"
 
-module FunctionalStack (ElemType : sig type t end):
-  sig
-    type stack
-    val create : unit -> stack
-    val pop : stack -> (ElemType.t * stack)
-    val push : stack -> ElemType.t -> stack
-  end =
-  struct
-    exception Error
-
-    type stack =
-      | Empty
-      | List of ElemType.t list
-
-    let create () = Empty
-
-    let pop stack =
-      match stack with
-        | List (top :: []) -> (top, Empty)
-        | List (top :: rem) -> (top, List rem)
-        | _ -> raise Error
-
-    let push stack elem =
-      match stack with
-        | Empty -> List [elem]
-        | List list -> List (elem :: list)
-  end;;
-
-module PolishCalculator (Stack : FunctionalStack) :
+module PolishCalculator:
   sig
     type expr
     val expr_of_string : string -> expr
