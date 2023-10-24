@@ -1,25 +1,22 @@
 #load "str.cma"
 
-(* interface of a functional stack *)
-module type AbsFunctionalStack =
+(* interface of a purely functional stack *)
+module type FunctionalStackADT =
   sig
-    type elem
-    type stack
-    val create : unit -> stack
-    val pop : stack -> elem * stack
-    val push : stack -> elem -> stack
+    type 'a stack
+    val create : unit -> 'a stack
+    val pop : 'a stack -> 'a * 'a stack
+    val push : 'a stack -> 'a -> 'a stack
   end;;
 
-(* functor to build a functional stack given a type *)
-module FunctionalStack (Elem : sig type t end) =
+(* implementation of a purely functional stack *)
+module FunctionalStack : FunctionalStackADT =
   struct
-    exception Error
+    exception StackIsEmpty
 
-    type elem = Elem.t
-
-    type stack =
+    type 'a stack =
       | Empty
-      | List of Elem.t list
+      | List of 'a list
 
     let create () = Empty
 
@@ -27,7 +24,7 @@ module FunctionalStack (Elem : sig type t end) =
       match stack with
         | List (top :: []) -> (top, Empty)
         | List (top :: rem) -> (top, List rem)
-        | _ -> raise Error
+        | _ -> raise StackIsEmpty
 
     let push stack elem =
       match stack with
@@ -36,7 +33,7 @@ module FunctionalStack (Elem : sig type t end) =
   end;;
 
 (* functor to build a polish calculator given an implementation of a functional stack *)
-module PolishCalculator (Stack : AbsFunctionalStack) :
+module PolishCalculator (Stack : FunctionalStackADT) :
   sig
     type expr
     val expr_of_string : string -> expr
@@ -76,10 +73,10 @@ module PolishCalculator (Stack : AbsFunctionalStack) :
               | Invalid -> (* Invalid = token is a a value, push to stack *)
                   expr_of_parsed_str list (Stack.push stack (Value (int_of_string token)))
               | _ -> (* token is an operator, pop last two expressions and create new expression *)
-                  let expr1 = (fst (Stack.pop stack))
+                  let expr2 = (fst (Stack.pop stack))
                   and op = (parse_token token)
-                  and expr2 = (fst (Stack.pop (snd (Stack.pop stack))))
-                  in expr_of_parsed_str list (Stack.push stack (Expr (expr1, op, expr2)))
+                  and expr1 = (fst (Stack.pop (snd (Stack.pop stack))))
+                  in expr_of_parsed_str list (Stack.push (Stack.create ()) (Expr (expr1, op, expr2)))
       (* split incoming string on spaces, initialize empty stack *)
       in expr_of_parsed_str (Str.split (Str.regexp " ") str) (Stack.create ())
 
@@ -109,22 +106,8 @@ module PolishCalculator (Stack : AbsFunctionalStack) :
       in eval expr
   end;;
 
-module Expr =
-  struct
-    type t =
-    | Expr of expr * sign * expr
-    | Value of int
-  and sign =
-    | Plus
-    | Minus
-    | Mult
-    | Div
-    | Pow
-    | Invalid;;
-  end;;
+(* use functor to get a polish calculator that works on FunctionalStack *)
+module PC = PolishCalculator(FunctionalStack);;
 
-module ExprStack = FunctionalStack(Expr);;
-module FunctionalStackPolishCalc = PolishCalculator(ExprStack);;
-
-FunctionalStackPolishCalc.eval (FunctionalStackPolishCalc.expr_of_string "10 2 + 4 - 3 * 2 / 2 **");;
-FunctionalStackPolishCalc.eval (FunctionalStackPolishCalc.expr_of_string "25");;
+PC.eval (PC.expr_of_string "10 2 + 4 - 3 * 2 / 2 **");;
+PC.eval (PC.expr_of_string "25");;
