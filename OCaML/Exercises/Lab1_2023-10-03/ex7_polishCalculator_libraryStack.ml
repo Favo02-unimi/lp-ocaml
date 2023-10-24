@@ -1,5 +1,12 @@
 #load "str.cma"
 
+(* --- WARNING ---
+   This version of PolishCalculator uses ocaml default library stack,
+   that is not purely functional (pop, push operations are in-place).
+   Check `ex7_polishCalculator.ml for purely functional version
+   with custom stack and PolishCalculator functor
+   --- WARNING --- *)
+
 module PolishCalculator:
   sig
     type expr
